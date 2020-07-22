@@ -1,11 +1,24 @@
 import createAuth0Client, { Auth0Client, RedirectLoginOptions } from "@auth0/auth0-spa-js";
 import produce from "immer";
-import { AnyEventObject, assign, Machine } from "xstate";
+import { AnyEventObject, assign, DoneInvokeEvent, Machine } from "xstate";
 
 import JobsGoWhereApiClient from "../shared/services/JobsGoWhereApiClient";
 
+interface User {
+  email: string;
+  email_verified: boolean;
+  given_name: string;
+  family_name: string;
+  name: string;
+  nickname: string;
+  picture: string;
+  sub: string;
+  updated_at: string;
+}
+
 export interface Auth0StateContext {
   client: Auth0Client | null;
+  user: User | null;
 }
 
 export interface Auth0StateSchema {
@@ -268,6 +281,9 @@ const config = {
             src: "authorizeAuth0Client",
             onDone: {
               target: "#auth0.authenticated",
+              actions: assign<Auth0StateContext, DoneInvokeEvent<{ user: User }>>({
+                user: (context, event) => event.data.user,
+              }),
             },
             onError: {
               target: "idle",
